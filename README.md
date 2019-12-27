@@ -4,13 +4,13 @@ Code for Tello Drone
 ---------------------------------------------------
 ## tello_ds4.py:
 
-- Dependencies:
+#### Dependencies:
 * numpy
 * cv2 (cv2 depends on ffmpeg)
 * pygame
 * djitellopy (https://github.com/damiafuentes/DJITelloPy)
 
-### When running this, a new window will open displaying Drone stream and battery status.
+#### When running this, a new window will open displaying Drone stream and battery status.
 Commands:
 
         Press escape key to quit.

@@ -48,7 +48,12 @@ class FrontEnd(object):
             - Arrow keys: Forward, backward, left and right.
             - A and D: Counter clockwise and clockwise rotations
             - W and S: Up and down.
-            - P: Emergency- Shutdown propellers            
+            - P: Emergency - Shutdown propellers
+            - Y: Display extended stats while pressed
+            - H: Display the history commands
+            - G: Resets to 0 the history commands
+            - J: Execute the history commands and cleans history when finish
+            ** History commands work only after a takeoff
             
         Joystick (DS4 used on tests):
             - D-Pad:        Flip on selected direction
@@ -57,11 +62,11 @@ class FrontEnd(object):
             - L2:           Up
             - R2:           Down
             - L Stick:      Forwards/Backwards,Left/Right
-            - R Stick:      Rotate
-            - Triangle:     Display extended stats
+            - R Stick:      Rotate/UP/Down
+            - Triangle:     Display extended stats while pressed
             - X:            Display the history commands
             - Circle:       Resets to 0 the history commands
-            - Square:       Run the history commands
+            - Square:       Execute the history commands and cleans history when finish
             ** History commands work only after a takeoff
     """
 
@@ -85,6 +90,7 @@ class FrontEnd(object):
 
         self.send_rc_control = False
         self.zero_rc_control = 0
+        self.zero_axis = 0
 
         # Create update timer
         pygame.time.set_timer(pygame.USEREVENT + 1, 50)
@@ -146,7 +152,15 @@ class FrontEnd(object):
                     self.keyup(event.key)
                 #-------------------
                 #JOYSTICK EVENTS
-                if event.type == JOYAXISMOTION: self.joystick_axis(event.axis, round(event.value, P))
+                if event.type == JOYAXISMOTION:
+                    #Joystick axis needs to stop sending 0.00 values when not used after 5 attempts
+                    if event.value != 0.0:
+                        self.joystick_axis(event.axis, round(event.value, P))
+                        self.zero_axis = 0
+                    else:
+                        if self.zero_axis <= 5:
+                            self.joystick_axis(event.axis, round(event.value, P))
+                            self.zero_axis += 1
                 #elif event.type == JOYBALLMOTION: print ('js', event.joy, 'ball', event.ball, round(event.rel, P)) #not used with DS4
                 elif event.type == JOYHATMOTION: self.joystick_hat(h[event.value])
                 elif event.type == JOYBUTTONUP: self.joystick_button_up(event.button)
@@ -280,7 +294,72 @@ class FrontEnd(object):
             self.history('apply')
         elif button == 1:  # Circle/A
             self.history('reset')
+#-------------------
+#EVENTS FUNCTIONS KEYBOARD
+    def keydown(self, key):
+        """ Update velocities based on key pressed
+        Arguments:
+            key: pygame key
+        """
+        if key == pygame.K_UP:  # set forward velocity
+            self.for_back_velocity = S
+        elif key == pygame.K_DOWN:  # set backward velocity
+            self.for_back_velocity = -S
+        elif key == pygame.K_LEFT:  # set left velocity
+            self.left_right_velocity = -S
+        elif key == pygame.K_RIGHT:  # set right velocity
+            self.left_right_velocity = S
+        elif key == pygame.K_w:  # set up velocity
+            self.up_down_velocity = S
+        elif key == pygame.K_s:  # set down velocity
+            self.up_down_velocity = -S
+        elif key == pygame.K_a:  # set yaw counter clockwise velocity
+            self.yaw_velocity = -S
+        elif key == pygame.K_d:  # set yaw clockwise velocity
+            self.yaw_velocity = S
+        elif key == pygame.K_y:  # Extended status clear
+            self.get_ext_stat()
+        #History Handling
+        elif key == pygame.K_h:  # Display History
+            self.history('display')
+        elif key == pygame.K_j:  # Execute History
+            self.history('apply')
+        elif key == pygame.K_g:  # Clear History
+            self.history('reset')
 
+    def keyup(self, key):
+        """ Update velocities based on key released
+        Arguments:
+            key: pygame key
+        """
+        if key == pygame.K_UP or key == pygame.K_DOWN:  # set zero forward/backward velocity
+            self.for_back_velocity = 0
+        elif key == pygame.K_LEFT or key == pygame.K_RIGHT:  # set zero left/right velocity
+            self.left_right_velocity = 0
+        elif key == pygame.K_w or key == pygame.K_s:  # set zero up/down velocity
+            self.up_down_velocity = 0
+        elif key == pygame.K_a or key == pygame.K_d:  # set zero yaw velocity
+            self.yaw_velocity = 0
+        elif key == pygame.K_t:  # takeoff
+            try:
+                self.tello.takeoff()
+                self.send_rc_control = True
+            except Exception:
+                pass
+        elif key == pygame.K_l:  # land
+            try:
+                self.tello.land()
+                self.send_rc_control = False
+            except Exception:
+                pass
+        elif key == pygame.K_p:  # Emergency - turn off propellers
+            self.tello.emergency()
+            self.send_rc_control = False
+        elif key == pygame.K_y:  # Extended status clear
+            global drone_ext_stat
+            drone_ext_stat = ''
+#-------------------
+#Extended stats display
     def get_stats(self):
         # declare drone Stats
         battery_stat = '0'
@@ -315,58 +394,6 @@ class FrontEnd(object):
         barometer_stat = re.sub('[^A-Za-z0-9.]+', '',  barometer_stat)
         drone_ext_stat = ' T: '+temp_stat+'°C H: '+height_stat+' t:'+flight_stat+' S: '+speed_stat+'cm/s Bar:'+barometer_stat+'cm'
 #-------------------
-#EVENTS FUNCTIONS KEYBOARD
-    def keydown(self, key):
-        """ Update velocities based on key pressed
-        Arguments:
-            key: pygame key
-        """
-        if key == pygame.K_UP:  # set forward velocity
-            self.for_back_velocity = S
-        elif key == pygame.K_DOWN:  # set backward velocity
-            self.for_back_velocity = -S
-        elif key == pygame.K_LEFT:  # set left velocity
-            self.left_right_velocity = -S
-        elif key == pygame.K_RIGHT:  # set right velocity
-            self.left_right_velocity = S
-        elif key == pygame.K_w:  # set up velocity
-            self.up_down_velocity = S
-        elif key == pygame.K_s:  # set down velocity
-            self.up_down_velocity = -S
-        elif key == pygame.K_a:  # set yaw counter clockwise velocity
-            self.yaw_velocity = -S
-        elif key == pygame.K_d:  # set yaw clockwise velocity
-            self.yaw_velocity = S
-
-    def keyup(self, key):
-        """ Update velocities based on key released
-        Arguments:
-            key: pygame key
-        """
-        if key == pygame.K_UP or key == pygame.K_DOWN:  # set zero forward/backward velocity
-            self.for_back_velocity = 0
-        elif key == pygame.K_LEFT or key == pygame.K_RIGHT:  # set zero left/right velocity
-            self.left_right_velocity = 0
-        elif key == pygame.K_w or key == pygame.K_s:  # set zero up/down velocity
-            self.up_down_velocity = 0
-        elif key == pygame.K_a or key == pygame.K_d:  # set zero yaw velocity
-            self.yaw_velocity = 0
-        elif key == pygame.K_t:  # takeoff
-            try:
-                self.tello.takeoff()
-                self.send_rc_control = True
-            except Exception:
-                pass
-        elif key == pygame.K_l:  # land
-            try:
-                self.tello.land()
-                self.send_rc_control = False
-            except Exception:
-                pass
-        elif key == pygame.K_p:  # Emergency - turn off propellers
-            self.tello.emergency()
-            self.send_rc_control = False
-#-------------------
 #History
     def history(self, parameter):
         global np_commad_hist
@@ -400,6 +427,8 @@ class FrontEnd(object):
                 if self.zero_rc_control <= 5:
                     self.tello.send_rc_control(self.left_right_velocity, self.for_back_velocity, self.up_down_velocity, self.yaw_velocity)
                     self.zero_rc_control += 1
+                else:
+                    print (newrow, self.zero_rc_control)
             else:
                 self.tello.send_rc_control(self.left_right_velocity, self.for_back_velocity, self.up_down_velocity, self.yaw_velocity)
                 self.zero_rc_control = 0

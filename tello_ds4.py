@@ -399,6 +399,7 @@ class FrontEnd(object):
         global np_commad_hist
         if parameter == 'apply':
             if self.send_rc_control:
+                print('Applying history!')
                 self.send_rc_control = False
                 for row in np_commad_hist[::-1]:
                     reverse_row = row * -1
@@ -407,10 +408,12 @@ class FrontEnd(object):
                     time.sleep(0.05)
                 np_commad_hist = np.array([[0, 0, 0, 0]])
                 self.send_rc_control = True
+                print('History applied and cleared')
             else:
                 print('takeoff first!!')
         elif parameter == 'reset':
             np_commad_hist = np.array([[0, 0, 0, 0]])
+            print('History cleared')
         elif parameter == 'display':
             print('Reversed command list:')
             for row in np_commad_hist[::-1]:

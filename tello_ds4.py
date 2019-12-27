@@ -430,8 +430,6 @@ class FrontEnd(object):
                 if self.zero_rc_control <= 5:
                     self.tello.send_rc_control(self.left_right_velocity, self.for_back_velocity, self.up_down_velocity, self.yaw_velocity)
                     self.zero_rc_control += 1
-                else:
-                    print (newrow, self.zero_rc_control)
             else:
                 self.tello.send_rc_control(self.left_right_velocity, self.for_back_velocity, self.up_down_velocity, self.yaw_velocity)
                 self.zero_rc_control = 0

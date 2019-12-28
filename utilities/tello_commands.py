@@ -4,6 +4,8 @@
 # http://www.ryzerobotics.com/
 #
 # 1/1/2018
+#
+# ** Original Ryze SDK file to issue commands to the drone. Not a dependency
 
 import threading 
 import socket

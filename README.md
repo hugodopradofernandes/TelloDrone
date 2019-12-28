@@ -4,9 +4,9 @@ Code for Tello Drone
 ---------------------------------------------------
 ## tello_qrcode.py:
 
-Script to control Ryze Tello drone using keyboard and/or Joystick (tested with DS4)
-Also reads QR and Bar codes and highlight them on screen, showing the values
-Script uses djitellopy wrapper (https://github.com/damiafuentes/DJITelloPy)
+Script to control Ryze Tello drone using keyboard and/or Joystick (tested with DS4).
+Also reads QR and Bar codes and highlight them on screen, showing the values.
+Script uses djitellopy wrapper (https://github.com/damiafuentes/DJITelloPy).
 
 #### Dependencies:
 * numpy

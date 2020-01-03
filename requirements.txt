@@ -1,1 +1,4 @@
-pip install djitellopy
+numpy==1.15.4
+opencv-python==3.4.3.18
+pygame==1.9.4
+djitellopy==1.5
